@@ -12,12 +12,14 @@ interface Depense {
   type: TypeDepense
   date: string
   compteDestination?: 'bred' | 'sumeria' | 'benoit' | 'marine' | 'aucun'
+  pointe?: boolean
 }
 
 interface Revenu {
   nom: string
   montant: number
   date: string
+  pointe?: boolean
 }
 
 interface HelloBankData {
@@ -189,9 +191,38 @@ export default function HelloBankPage() {
     }
   }
 
+  const togglePointeDepense = (index: number) => {
+    const updatedDepenses = [...helloBank.depenses]
+    updatedDepenses[index] = {
+      ...updatedDepenses[index],
+      pointe: !updatedDepenses[index].pointe
+    }
+    saveHelloBank({ ...helloBank, depenses: updatedDepenses })
+  }
+
+  const togglePointeRevenu = (index: number) => {
+    const updatedRevenus = [...helloBank.revenus]
+    updatedRevenus[index] = {
+      ...updatedRevenus[index],
+      pointe: !updatedRevenus[index].pointe
+    }
+    saveHelloBank({ ...helloBank, revenus: updatedRevenus })
+  }
+
+  const resetPointage = () => {
+    const updatedDepenses = helloBank.depenses.map(d => ({ ...d, pointe: false }))
+    const updatedRevenus = helloBank.revenus.map(r => ({ ...r, pointe: false }))
+    saveHelloBank({ ...helloBank, depenses: updatedDepenses, revenus: updatedRevenus })
+  }
+
   const totalDepenses = helloBank.depenses.reduce((sum, depense) => sum + depense.montant, 0)
   const totalRevenus = helloBank.revenus.reduce((sum, revenu) => sum + revenu.montant, 0)
   const solde = totalRevenus - totalDepenses
+  
+  const depensesPointees = helloBank.depenses.filter(d => d.pointe).reduce((sum, d) => sum + d.montant, 0)
+  const revenusPointes = helloBank.revenus.filter(r => r.pointe).reduce((sum, r) => sum + r.montant, 0)
+  const depensesNonPointees = totalDepenses - depensesPointees
+  const revenusNonPointes = totalRevenus - revenusPointes
 
   if (loading) {
     return (
@@ -220,24 +251,60 @@ export default function HelloBankPage() {
       <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
         {/* Résumé */}
         <div className="bg-white rounded-xl shadow-lg p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-            <CreditCard className="w-5 h-5 mr-2" />
-            Résumé
-          </h2>
-          <div className="space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Total Revenus</span>
-              <span className="text-lg font-semibold text-green-600">+{totalRevenus.toFixed(2)} €</span>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+              <CreditCard className="w-5 h-5 mr-2" />
+              Résumé
+            </h2>
+            <button
+              onClick={resetPointage}
+              disabled={saving}
+              className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 disabled:opacity-50 text-sm"
+            >
+              Remettre le pointage à zéro
+            </button>
+          </div>
+          <div className="grid grid-cols-2 gap-6">
+            {/* Colonne Totaux */}
+            <div className="space-y-3">
+              <h3 className="font-semibold text-gray-700 mb-2">Totaux</h3>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">Total Revenus</span>
+                <span className="text-lg font-semibold text-green-600">+{totalRevenus.toFixed(2)} €</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">Total Dépenses</span>
+                <span className="text-lg font-semibold text-red-600">-{totalDepenses.toFixed(2)} €</span>
+              </div>
+              <div className="border-t pt-3 flex justify-between items-center">
+                <span className="text-gray-900 font-semibold">Solde</span>
+                <span className={`text-2xl font-bold ${solde >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  {solde >= 0 ? '+' : ''}{solde.toFixed(2)} €
+                </span>
+              </div>
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Total Dépenses</span>
-              <span className="text-lg font-semibold text-red-600">-{totalDepenses.toFixed(2)} €</span>
-            </div>
-            <div className="border-t pt-3 flex justify-between items-center">
-              <span className="text-gray-900 font-semibold">Solde</span>
-              <span className={`text-2xl font-bold ${solde >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {solde >= 0 ? '+' : ''}{solde.toFixed(2)} €
-              </span>
+            
+            {/* Colonne Pointage */}
+            <div className="space-y-3 border-l pl-6">
+              <h3 className="font-semibold text-gray-700 mb-2">Pointage</h3>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">Revenus pointés</span>
+                <span className="text-lg font-semibold text-green-600">+{revenusPointes.toFixed(2)} €</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">Dépenses pointées</span>
+                <span className="text-lg font-semibold text-red-600">-{depensesPointees.toFixed(2)} €</span>
+              </div>
+              <div className="border-t pt-3">
+                <div className="flex justify-between items-center text-sm text-gray-500">
+                  <span>Reste à pointer (revenus)</span>
+                  <span>+{revenusNonPointes.toFixed(2)} €</span>
+                </div>
+                <div className="flex justify-between items-center text-sm text-gray-500 mt-1">
+                  <span>Reste à pointer (dépenses)</span>
+                  <span>-{depensesNonPointees.toFixed(2)} €</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -314,14 +381,26 @@ export default function HelloBankPage() {
                 ) : (
                   // Mode affichage
                   <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <div className="font-medium text-gray-900">{depense.nom}</div>
-                        <span className={`text-xs px-2 py-1 rounded-full border ${typeColors[depense.type]}`}>
-                          {typeLabels[depense.type]}
-                        </span>
+                    <div className="flex items-center gap-3 flex-1">
+                      <input
+                        type="checkbox"
+                        checked={depense.pointe || false}
+                        onChange={() => togglePointeDepense(index)}
+                        className="w-5 h-5 text-cyan-600 rounded focus:ring-2 focus:ring-cyan-500 cursor-pointer"
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <div className={`font-medium ${depense.pointe ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
+                            {depense.nom}
+                          </div>
+                          <span className={`text-xs px-2 py-1 rounded-full border ${typeColors[depense.type]}`}>
+                            {typeLabels[depense.type]}
+                          </span>
+                        </div>
+                        <div className={`text-sm ${depense.pointe ? 'text-gray-400' : 'text-gray-600'}`}>
+                          {depense.montant.toFixed(2)} €
+                        </div>
                       </div>
-                      <div className="text-sm text-gray-600">{depense.montant.toFixed(2)} €</div>
                     </div>
                     <div className="flex gap-2">
                       <button
@@ -460,9 +539,21 @@ export default function HelloBankPage() {
                 ) : (
                   // Mode affichage
                   <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="font-medium text-gray-900">{revenu.nom}</div>
-                      <div className="text-sm text-gray-600">{revenu.montant.toFixed(2)} €</div>
+                    <div className="flex items-center gap-3 flex-1">
+                      <input
+                        type="checkbox"
+                        checked={revenu.pointe || false}
+                        onChange={() => togglePointeRevenu(index)}
+                        className="w-5 h-5 text-green-600 rounded focus:ring-2 focus:ring-green-500 cursor-pointer"
+                      />
+                      <div className="flex-1">
+                        <div className={`font-medium ${revenu.pointe ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
+                          {revenu.nom}
+                        </div>
+                        <div className={`text-sm ${revenu.pointe ? 'text-gray-400' : 'text-gray-600'}`}>
+                          {revenu.montant.toFixed(2)} €
+                        </div>
+                      </div>
                     </div>
                     <div className="flex gap-2">
                       <button
