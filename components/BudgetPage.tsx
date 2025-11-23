@@ -8,12 +8,14 @@ interface Charge {
   nom: string
   montant: number
   date: string
+  pointe?: boolean
 }
 
 interface Revenu {
   nom: string
   montant: number
   date: string
+  pointe?: boolean
 }
 
 interface BudgetData {
@@ -179,9 +181,38 @@ export default function BudgetPage({ personne }: BudgetPageProps) {
     saveBudget(updatedBudget)
   }
 
+  const togglePointeCharge = (index: number) => {
+    const updatedCharges = [...budget.charges]
+    updatedCharges[index] = {
+      ...updatedCharges[index],
+      pointe: !updatedCharges[index].pointe
+    }
+    saveBudget({ ...budget, charges: updatedCharges })
+  }
+
+  const togglePointeRevenu = (index: number) => {
+    const updatedRevenus = [...budget.revenus]
+    updatedRevenus[index] = {
+      ...updatedRevenus[index],
+      pointe: !updatedRevenus[index].pointe
+    }
+    saveBudget({ ...budget, revenus: updatedRevenus })
+  }
+
+  const resetPointage = () => {
+    const updatedCharges = budget.charges.map(c => ({ ...c, pointe: false }))
+    const updatedRevenus = budget.revenus.map(r => ({ ...r, pointe: false }))
+    saveBudget({ ...budget, charges: updatedCharges, revenus: updatedRevenus })
+  }
+
   const totalCharges = budget.charges.reduce((sum, charge) => sum + charge.montant, 0)
   const totalRevenus = budget.revenus.reduce((sum, revenu) => sum + revenu.montant, 0)
   const solde = totalRevenus - totalCharges - budget.virementFamille
+  
+  const chargesPointees = budget.charges.filter(c => c.pointe).reduce((sum, c) => sum + c.montant, 0)
+  const revenusPointes = budget.revenus.filter(r => r.pointe).reduce((sum, r) => sum + r.montant, 0)
+  const chargesNonPointees = totalCharges - chargesPointees
+  const revenusNonPointes = totalRevenus - revenusPointes
 
   if (loading) {
     return (
@@ -209,28 +240,64 @@ export default function BudgetPage({ personne }: BudgetPageProps) {
       <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
         {/* Résumé */}
         <div className="bg-white rounded-xl shadow-lg p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-            <Euro className="w-5 h-5 mr-2" />
-            Résumé
-          </h2>
-          <div className="space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Total Revenus</span>
-              <span className="text-lg font-semibold text-green-600">+{totalRevenus.toFixed(2)} €</span>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+              <Euro className="w-5 h-5 mr-2" />
+              Résumé
+            </h2>
+            <button
+              onClick={resetPointage}
+              disabled={saving}
+              className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 disabled:opacity-50 text-sm"
+            >
+              Remettre le pointage à zéro
+            </button>
+          </div>
+          <div className="grid grid-cols-2 gap-6">
+            {/* Colonne Totaux */}
+            <div className="space-y-3">
+              <h3 className="font-semibold text-gray-700 mb-2">Totaux</h3>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">Total Revenus</span>
+                <span className="text-lg font-semibold text-green-600">+{totalRevenus.toFixed(2)} €</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">Total Charges</span>
+                <span className="text-lg font-semibold text-red-600">-{totalCharges.toFixed(2)} €</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">Virement Famille</span>
+                <span className="text-lg font-semibold text-orange-600">-{budget.virementFamille.toFixed(2)} €</span>
+              </div>
+              <div className="border-t pt-3 flex justify-between items-center">
+                <span className="text-gray-900 font-semibold">Solde</span>
+                <span className={`text-xl font-bold ${solde >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  {solde >= 0 ? '+' : ''}{solde.toFixed(2)} €
+                </span>
+              </div>
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Total Charges</span>
-              <span className="text-lg font-semibold text-red-600">-{totalCharges.toFixed(2)} €</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Virement Famille</span>
-              <span className="text-lg font-semibold text-orange-600">-{budget.virementFamille.toFixed(2)} €</span>
-            </div>
-            <div className="border-t pt-3 flex justify-between items-center">
-              <span className="text-gray-900 font-semibold">Solde</span>
-              <span className={`text-xl font-bold ${solde >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {solde >= 0 ? '+' : ''}{solde.toFixed(2)} €
-              </span>
+            
+            {/* Colonne Pointage */}
+            <div className="space-y-3 border-l pl-6">
+              <h3 className="font-semibold text-gray-700 mb-2">Pointage</h3>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">Revenus pointés</span>
+                <span className="text-lg font-semibold text-green-600">+{revenusPointes.toFixed(2)} €</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">Charges pointées</span>
+                <span className="text-lg font-semibold text-red-600">-{chargesPointees.toFixed(2)} €</span>
+              </div>
+              <div className="border-t pt-3">
+                <div className="flex justify-between items-center text-sm text-gray-500">
+                  <span>Reste à pointer (revenus)</span>
+                  <span>+{revenusNonPointes.toFixed(2)} €</span>
+                </div>
+                <div className="flex justify-between items-center text-sm text-gray-500 mt-1">
+                  <span>Reste à pointer (charges)</span>
+                  <span>-{chargesNonPointees.toFixed(2)} €</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -275,9 +342,21 @@ export default function BudgetPage({ personne }: BudgetPageProps) {
                   </div>
                 ) : (
                   <div className="flex items-center justify-between">
-                    <div>
-                      <div className="font-medium text-gray-900">{revenu.nom}</div>
-                      <div className="text-sm text-gray-600">{revenu.montant.toFixed(2)} €</div>
+                    <div className="flex items-center gap-3 flex-1">
+                      <input
+                        type="checkbox"
+                        checked={revenu.pointe || false}
+                        onChange={() => togglePointeRevenu(index)}
+                        className="w-5 h-5 text-green-600 rounded focus:ring-2 focus:ring-green-500 cursor-pointer"
+                      />
+                      <div className="flex-1">
+                        <div className={`font-medium ${revenu.pointe ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
+                          {revenu.nom}
+                        </div>
+                        <div className={`text-sm ${revenu.pointe ? 'text-gray-400' : 'text-gray-600'}`}>
+                          {revenu.montant.toFixed(2)} €
+                        </div>
+                      </div>
                     </div>
                     <div className="flex gap-2">
                       <button onClick={() => startEditRevenu(index)} disabled={saving} className="text-blue-500 hover:text-blue-700 p-2 disabled:opacity-50 disabled:cursor-not-allowed">
@@ -358,9 +437,21 @@ export default function BudgetPage({ personne }: BudgetPageProps) {
                   </div>
                 ) : (
                   <div className="flex items-center justify-between">
-                    <div>
-                      <div className="font-medium text-gray-900">{charge.nom}</div>
-                      <div className="text-sm text-gray-600">{charge.montant.toFixed(2)} €</div>
+                    <div className="flex items-center gap-3 flex-1">
+                      <input
+                        type="checkbox"
+                        checked={charge.pointe || false}
+                        onChange={() => togglePointeCharge(index)}
+                        className="w-5 h-5 text-red-600 rounded focus:ring-2 focus:ring-red-500 cursor-pointer"
+                      />
+                      <div className="flex-1">
+                        <div className={`font-medium ${charge.pointe ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
+                          {charge.nom}
+                        </div>
+                        <div className={`text-sm ${charge.pointe ? 'text-gray-400' : 'text-gray-600'}`}>
+                          {charge.montant.toFixed(2)} €
+                        </div>
+                      </div>
                     </div>
                     <div className="flex gap-2">
                       <button onClick={() => startEditCharge(index)} disabled={saving} className="text-blue-500 hover:text-blue-700 p-2 disabled:opacity-50 disabled:cursor-not-allowed">
