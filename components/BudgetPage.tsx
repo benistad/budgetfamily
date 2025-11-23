@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, Trash2, ArrowLeft, Euro, TrendingUp, TrendingDown, Home } from 'lucide-react'
+import { Plus, Trash2, ArrowLeft, Euro, TrendingUp, TrendingDown, Home, Edit2, Check, X } from 'lucide-react'
 import Link from 'next/link'
 
 interface Charge {
@@ -37,6 +37,10 @@ export default function BudgetPage({ personne }: BudgetPageProps) {
   const [newRevenu, setNewRevenu] = useState({ nom: '', montant: '' })
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [editingChargeIndex, setEditingChargeIndex] = useState<number | null>(null)
+  const [editingRevenuIndex, setEditingRevenuIndex] = useState<number | null>(null)
+  const [editChargeData, setEditChargeData] = useState<Charge | null>(null)
+  const [editRevenuData, setEditRevenuData] = useState<Revenu | null>(null)
 
   const nom = personne.charAt(0).toUpperCase() + personne.slice(1)
 
@@ -127,6 +131,46 @@ export default function BudgetPage({ personne }: BudgetPageProps) {
     saveBudget(updatedBudget)
   }
 
+  const startEditCharge = (index: number) => {
+    setEditingChargeIndex(index)
+    setEditChargeData({ ...budget.charges[index] })
+  }
+
+  const cancelEditCharge = () => {
+    setEditingChargeIndex(null)
+    setEditChargeData(null)
+  }
+
+  const saveEditCharge = () => {
+    if (editingChargeIndex !== null && editChargeData) {
+      const updatedCharges = [...budget.charges]
+      updatedCharges[editingChargeIndex] = editChargeData
+      saveBudget({ ...budget, charges: updatedCharges })
+      setEditingChargeIndex(null)
+      setEditChargeData(null)
+    }
+  }
+
+  const startEditRevenu = (index: number) => {
+    setEditingRevenuIndex(index)
+    setEditRevenuData({ ...budget.revenus[index] })
+  }
+
+  const cancelEditRevenu = () => {
+    setEditingRevenuIndex(null)
+    setEditRevenuData(null)
+  }
+
+  const saveEditRevenu = () => {
+    if (editingRevenuIndex !== null && editRevenuData) {
+      const updatedRevenus = [...budget.revenus]
+      updatedRevenus[editingRevenuIndex] = editRevenuData
+      saveBudget({ ...budget, revenus: updatedRevenus })
+      setEditingRevenuIndex(null)
+      setEditRevenuData(null)
+    }
+  }
+
   const updateVirementFamille = (montant: number) => {
     const updatedBudget = {
       ...budget,
@@ -200,18 +244,51 @@ export default function BudgetPage({ personne }: BudgetPageProps) {
           
           <div className="space-y-3 mb-4">
             {budget.revenus.map((revenu, index) => (
-              <div key={index} className="flex items-center justify-between bg-green-50 p-3 rounded-lg">
-                <div>
-                  <div className="font-medium text-gray-900">{revenu.nom}</div>
-                  <div className="text-sm text-gray-600">{revenu.montant.toFixed(2)} €</div>
-                </div>
-                <button
-                  onClick={() => removeRevenu(index)}
-                  disabled={saving}
-                  className="text-red-500 hover:text-red-700 p-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <Trash2 className="w-5 h-5" />
-                </button>
+              <div key={index} className="bg-green-50 p-3 rounded-lg">
+                {editingRevenuIndex === index && editRevenuData ? (
+                  <div className="space-y-3">
+                    <input
+                      type="text"
+                      value={editRevenuData.nom}
+                      onChange={(e) => setEditRevenuData({ ...editRevenuData, nom: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      placeholder="Nom du revenu"
+                    />
+                    <input
+                      type="number"
+                      value={editRevenuData.montant}
+                      onChange={(e) => setEditRevenuData({ ...editRevenuData, montant: parseFloat(e.target.value) || 0 })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      placeholder="Montant"
+                      step="0.01"
+                    />
+                    <div className="flex gap-2">
+                      <button onClick={saveEditRevenu} disabled={saving} className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50 flex items-center justify-center gap-2">
+                        <Check className="w-4 h-4" />
+                        Valider
+                      </button>
+                      <button onClick={cancelEditRevenu} disabled={saving} className="flex-1 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 disabled:opacity-50 flex items-center justify-center gap-2">
+                        <X className="w-4 h-4" />
+                        Annuler
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="font-medium text-gray-900">{revenu.nom}</div>
+                      <div className="text-sm text-gray-600">{revenu.montant.toFixed(2)} €</div>
+                    </div>
+                    <div className="flex gap-2">
+                      <button onClick={() => startEditRevenu(index)} disabled={saving} className="text-blue-500 hover:text-blue-700 p-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <Edit2 className="w-5 h-5" />
+                      </button>
+                      <button onClick={() => removeRevenu(index)} disabled={saving} className="text-red-500 hover:text-red-700 p-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -250,18 +327,51 @@ export default function BudgetPage({ personne }: BudgetPageProps) {
           
           <div className="space-y-3 mb-4">
             {budget.charges.map((charge, index) => (
-              <div key={index} className="flex items-center justify-between bg-red-50 p-3 rounded-lg">
-                <div>
-                  <div className="font-medium text-gray-900">{charge.nom}</div>
-                  <div className="text-sm text-gray-600">{charge.montant.toFixed(2)} €</div>
-                </div>
-                <button
-                  onClick={() => removeCharge(index)}
-                  disabled={saving}
-                  className="text-red-500 hover:text-red-700 p-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <Trash2 className="w-5 h-5" />
-                </button>
+              <div key={index} className="bg-red-50 p-3 rounded-lg">
+                {editingChargeIndex === index && editChargeData ? (
+                  <div className="space-y-3">
+                    <input
+                      type="text"
+                      value={editChargeData.nom}
+                      onChange={(e) => setEditChargeData({ ...editChargeData, nom: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                      placeholder="Nom de la charge"
+                    />
+                    <input
+                      type="number"
+                      value={editChargeData.montant}
+                      onChange={(e) => setEditChargeData({ ...editChargeData, montant: parseFloat(e.target.value) || 0 })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                      placeholder="Montant"
+                      step="0.01"
+                    />
+                    <div className="flex gap-2">
+                      <button onClick={saveEditCharge} disabled={saving} className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50 flex items-center justify-center gap-2">
+                        <Check className="w-4 h-4" />
+                        Valider
+                      </button>
+                      <button onClick={cancelEditCharge} disabled={saving} className="flex-1 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 disabled:opacity-50 flex items-center justify-center gap-2">
+                        <X className="w-4 h-4" />
+                        Annuler
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="font-medium text-gray-900">{charge.nom}</div>
+                      <div className="text-sm text-gray-600">{charge.montant.toFixed(2)} €</div>
+                    </div>
+                    <div className="flex gap-2">
+                      <button onClick={() => startEditCharge(index)} disabled={saving} className="text-blue-500 hover:text-blue-700 p-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <Edit2 className="w-5 h-5" />
+                      </button>
+                      <button onClick={() => removeCharge(index)} disabled={saving} className="text-red-500 hover:text-red-700 p-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>
