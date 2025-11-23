@@ -73,12 +73,14 @@ export default function HelloBankPage() {
   const saveHelloBank = async (updatedData: HelloBankData) => {
     setSaving(true)
     try {
+      console.log('Saving to API:', updatedData)
       const response = await fetch('/api/hellobank', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedData)
       })
       const data = await response.json()
+      console.log('API response:', data)
       setHelloBank({
         depenses: data.depenses || [],
         revenus: data.revenus || []
@@ -107,10 +109,13 @@ export default function HelloBankPage() {
   }
 
   const removeDepense = (index: number) => {
+    console.log('Removing depense at index:', index)
+    console.log('Current depenses:', helloBank.depenses)
     const updatedData = {
       ...helloBank,
       depenses: helloBank.depenses.filter((_, i) => i !== index)
     }
+    console.log('Updated depenses:', updatedData.depenses)
     saveHelloBank(updatedData)
   }
 
