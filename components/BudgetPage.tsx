@@ -5,14 +5,12 @@ import { Plus, Trash2, ArrowLeft, Euro, TrendingUp, TrendingDown, Home } from 'l
 import Link from 'next/link'
 
 interface Charge {
-  _id?: string
   nom: string
   montant: number
   date: Date
 }
 
 interface Revenu {
-  _id?: string
   nom: string
   montant: number
   date: Date

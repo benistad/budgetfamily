@@ -7,7 +7,6 @@ import Link from 'next/link'
 type TypeDepense = 'prelevement' | 'paiement_recurrent' | 'virement_recurrent'
 
 interface Depense {
-  _id?: string
   nom: string
   montant: number
   type: TypeDepense
