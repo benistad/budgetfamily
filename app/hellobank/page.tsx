@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, Trash2, ArrowLeft, CreditCard, TrendingDown, TrendingUp } from 'lucide-react'
+import { Plus, Trash2, ArrowLeft, CreditCard, TrendingDown, TrendingUp, Edit2, Check, X } from 'lucide-react'
 import Link from 'next/link'
 
 type TypeDepense = 'prelevement' | 'paiement_recurrent' | 'virement_recurrent'
@@ -50,6 +50,10 @@ export default function HelloBankPage() {
   const [newRevenu, setNewRevenu] = useState({ nom: '', montant: '' })
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [editingDepenseIndex, setEditingDepenseIndex] = useState<number | null>(null)
+  const [editingRevenuIndex, setEditingRevenuIndex] = useState<number | null>(null)
+  const [editDepenseData, setEditDepenseData] = useState<Depense | null>(null)
+  const [editRevenuData, setEditRevenuData] = useState<Revenu | null>(null)
 
   useEffect(() => {
     fetchHelloBank()
@@ -142,6 +146,46 @@ export default function HelloBankPage() {
     saveHelloBank(updatedData)
   }
 
+  const startEditDepense = (index: number) => {
+    setEditingDepenseIndex(index)
+    setEditDepenseData({ ...helloBank.depenses[index] })
+  }
+
+  const cancelEditDepense = () => {
+    setEditingDepenseIndex(null)
+    setEditDepenseData(null)
+  }
+
+  const saveEditDepense = () => {
+    if (editingDepenseIndex !== null && editDepenseData) {
+      const updatedDepenses = [...helloBank.depenses]
+      updatedDepenses[editingDepenseIndex] = editDepenseData
+      saveHelloBank({ ...helloBank, depenses: updatedDepenses })
+      setEditingDepenseIndex(null)
+      setEditDepenseData(null)
+    }
+  }
+
+  const startEditRevenu = (index: number) => {
+    setEditingRevenuIndex(index)
+    setEditRevenuData({ ...helloBank.revenus[index] })
+  }
+
+  const cancelEditRevenu = () => {
+    setEditingRevenuIndex(null)
+    setEditRevenuData(null)
+  }
+
+  const saveEditRevenu = () => {
+    if (editingRevenuIndex !== null && editRevenuData) {
+      const updatedRevenus = [...helloBank.revenus]
+      updatedRevenus[editingRevenuIndex] = editRevenuData
+      saveHelloBank({ ...helloBank, revenus: updatedRevenus })
+      setEditingRevenuIndex(null)
+      setEditRevenuData(null)
+    }
+  }
+
   const totalDepenses = helloBank.depenses.reduce((sum, depense) => sum + depense.montant, 0)
   const totalRevenus = helloBank.revenus.reduce((sum, revenu) => sum + revenu.montant, 0)
   const solde = totalRevenus - totalDepenses
@@ -204,23 +248,83 @@ export default function HelloBankPage() {
           
           <div className="space-y-3 mb-4">
             {helloBank.depenses.map((depense, index) => (
-              <div key={index} className="flex items-center justify-between bg-gray-50 p-4 rounded-lg border border-gray-200">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <div className="font-medium text-gray-900">{depense.nom}</div>
-                    <span className={`text-xs px-2 py-1 rounded-full border ${typeColors[depense.type]}`}>
-                      {typeLabels[depense.type]}
-                    </span>
+              <div key={index} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                {editingDepenseIndex === index && editDepenseData ? (
+                  // Mode édition
+                  <div className="space-y-3">
+                    <input
+                      type="text"
+                      value={editDepenseData.nom}
+                      onChange={(e) => setEditDepenseData({ ...editDepenseData, nom: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                      placeholder="Nom de la dépense"
+                    />
+                    <input
+                      type="number"
+                      value={editDepenseData.montant}
+                      onChange={(e) => setEditDepenseData({ ...editDepenseData, montant: parseFloat(e.target.value) || 0 })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                      placeholder="Montant"
+                      step="0.01"
+                    />
+                    <select
+                      value={editDepenseData.type}
+                      onChange={(e) => setEditDepenseData({ ...editDepenseData, type: e.target.value as TypeDepense })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                    >
+                      <option value="prelevement">Prélèvement</option>
+                      <option value="paiement_recurrent">Paiement récurrent CB</option>
+                      <option value="virement_recurrent">Virement récurrent</option>
+                    </select>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={saveEditDepense}
+                        disabled={saving}
+                        className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50 flex items-center justify-center gap-2"
+                      >
+                        <Check className="w-4 h-4" />
+                        Valider
+                      </button>
+                      <button
+                        onClick={cancelEditDepense}
+                        disabled={saving}
+                        className="flex-1 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 disabled:opacity-50 flex items-center justify-center gap-2"
+                      >
+                        <X className="w-4 h-4" />
+                        Annuler
+                      </button>
+                    </div>
                   </div>
-                  <div className="text-sm text-gray-600">{depense.montant.toFixed(2)} €</div>
-                </div>
-                <button
-                  onClick={() => removeDepense(index)}
-                  disabled={saving}
-                  className="text-red-500 hover:text-red-700 p-2 ml-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <Trash2 className="w-5 h-5" />
-                </button>
+                ) : (
+                  // Mode affichage
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className="font-medium text-gray-900">{depense.nom}</div>
+                        <span className={`text-xs px-2 py-1 rounded-full border ${typeColors[depense.type]}`}>
+                          {typeLabels[depense.type]}
+                        </span>
+                      </div>
+                      <div className="text-sm text-gray-600">{depense.montant.toFixed(2)} €</div>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => startEditDepense(index)}
+                        disabled={saving}
+                        className="text-blue-500 hover:text-blue-700 p-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <Edit2 className="w-5 h-5" />
+                      </button>
+                      <button
+                        onClick={() => removeDepense(index)}
+                        disabled={saving}
+                        className="text-red-500 hover:text-red-700 p-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
             
@@ -284,18 +388,69 @@ export default function HelloBankPage() {
           
           <div className="space-y-3 mb-4">
             {helloBank.revenus.map((revenu, index) => (
-              <div key={index} className="flex items-center justify-between bg-green-50 p-4 rounded-lg border border-green-200">
-                <div className="flex-1">
-                  <div className="font-medium text-gray-900">{revenu.nom}</div>
-                  <div className="text-sm text-gray-600">{revenu.montant.toFixed(2)} €</div>
-                </div>
-                <button
-                  onClick={() => removeRevenu(index)}
-                  disabled={saving}
-                  className="text-red-500 hover:text-red-700 p-2 ml-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <Trash2 className="w-5 h-5" />
-                </button>
+              <div key={index} className="bg-green-50 p-4 rounded-lg border border-green-200">
+                {editingRevenuIndex === index && editRevenuData ? (
+                  // Mode édition
+                  <div className="space-y-3">
+                    <input
+                      type="text"
+                      value={editRevenuData.nom}
+                      onChange={(e) => setEditRevenuData({ ...editRevenuData, nom: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      placeholder="Nom du revenu"
+                    />
+                    <input
+                      type="number"
+                      value={editRevenuData.montant}
+                      onChange={(e) => setEditRevenuData({ ...editRevenuData, montant: parseFloat(e.target.value) || 0 })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      placeholder="Montant"
+                      step="0.01"
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        onClick={saveEditRevenu}
+                        disabled={saving}
+                        className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50 flex items-center justify-center gap-2"
+                      >
+                        <Check className="w-4 h-4" />
+                        Valider
+                      </button>
+                      <button
+                        onClick={cancelEditRevenu}
+                        disabled={saving}
+                        className="flex-1 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 disabled:opacity-50 flex items-center justify-center gap-2"
+                      >
+                        <X className="w-4 h-4" />
+                        Annuler
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  // Mode affichage
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="font-medium text-gray-900">{revenu.nom}</div>
+                      <div className="text-sm text-gray-600">{revenu.montant.toFixed(2)} €</div>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => startEditRevenu(index)}
+                        disabled={saving}
+                        className="text-blue-500 hover:text-blue-700 p-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <Edit2 className="w-5 h-5" />
+                      </button>
+                      <button
+                        onClick={() => removeRevenu(index)}
+                        disabled={saving}
+                        className="text-red-500 hover:text-red-700 p-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
             
