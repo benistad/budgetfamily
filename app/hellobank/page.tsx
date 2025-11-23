@@ -75,7 +75,7 @@ export default function HelloBankPage() {
     try {
       console.log('Saving to API:', updatedData)
       const response = await fetch('/api/hellobank', {
-        method: 'PUT',
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedData)
       })

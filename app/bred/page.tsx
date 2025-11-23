@@ -74,7 +74,7 @@ export default function BredPage() {
     setSaving(true)
     try {
       const response = await fetch('/api/bred', {
-        method: 'PUT',
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedData)
       })

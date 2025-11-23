@@ -64,7 +64,7 @@ export default function SumeriaPage() {
     setSaving(true)
     try {
       const response = await fetch('/api/sumeria', {
-        method: 'PUT',
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedData)
       })

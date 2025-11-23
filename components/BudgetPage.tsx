@@ -64,7 +64,7 @@ export default function BudgetPage({ personne }: BudgetPageProps) {
     setSaving(true)
     try {
       const response = await fetch(`/api/budget/${personne}`, {
-        method: 'PUT',
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedBudget)
       })
