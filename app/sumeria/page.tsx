@@ -12,6 +12,7 @@ interface Depense {
   type: TypeDepense
   date: string
   compteDestination?: 'hellobank' | 'bred' | 'benoit' | 'marine' | 'aucun'
+  pointe?: boolean
 }
 
 interface SumeriaData {
@@ -128,7 +129,23 @@ export default function SumeriaPage() {
     }
   }
 
+  const togglePointeDepense = (index: number) => {
+    const updatedDepenses = [...sumeria.depenses]
+    updatedDepenses[index] = {
+      ...updatedDepenses[index],
+      pointe: !updatedDepenses[index].pointe
+    }
+    saveSumeria({ ...sumeria, depenses: updatedDepenses })
+  }
+
+  const resetPointage = () => {
+    const updatedDepenses = sumeria.depenses.map(d => ({ ...d, pointe: false }))
+    saveSumeria({ ...sumeria, depenses: updatedDepenses })
+  }
+
   const totalDepenses = sumeria.depenses.reduce((sum, depense) => sum + depense.montant, 0)
+  const depensesPointees = sumeria.depenses.filter(d => d.pointe).reduce((sum, d) => sum + d.montant, 0)
+  const depensesNonPointees = totalDepenses - depensesPointees
 
   if (loading) {
     return (
@@ -157,17 +174,45 @@ export default function SumeriaPage() {
       <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
         {/* Résumé */}
         <div className="bg-white rounded-xl shadow-lg p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-            <CreditCard className="w-5 h-5 mr-2" />
-            Résumé
-          </h2>
-          <div className="space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Total Dépenses</span>
-              <span className="text-2xl font-bold text-red-600">-{totalDepenses.toFixed(2)} €</span>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+              <CreditCard className="w-5 h-5 mr-2" />
+              Résumé
+            </h2>
+            <button
+              onClick={resetPointage}
+              disabled={saving}
+              className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 disabled:opacity-50 text-sm"
+            >
+              Remettre le pointage à zéro
+            </button>
+          </div>
+          <div className="grid grid-cols-2 gap-6">
+            {/* Colonne Totaux */}
+            <div className="space-y-3">
+              <h3 className="font-semibold text-gray-700 mb-2">Totaux</h3>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">Total Dépenses</span>
+                <span className="text-2xl font-bold text-red-600">-{totalDepenses.toFixed(2)} €</span>
+              </div>
+              <div className="text-sm text-gray-500">
+                {sumeria.depenses.length} dépense{sumeria.depenses.length > 1 ? 's' : ''} enregistrée{sumeria.depenses.length > 1 ? 's' : ''}
+              </div>
             </div>
-            <div className="text-sm text-gray-500">
-              {sumeria.depenses.length} dépense{sumeria.depenses.length > 1 ? 's' : ''} enregistrée{sumeria.depenses.length > 1 ? 's' : ''}
+            
+            {/* Colonne Pointage */}
+            <div className="space-y-3 border-l pl-6">
+              <h3 className="font-semibold text-gray-700 mb-2">Pointage</h3>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">Dépenses pointées</span>
+                <span className="text-lg font-semibold text-red-600">-{depensesPointees.toFixed(2)} €</span>
+              </div>
+              <div className="border-t pt-3">
+                <div className="flex justify-between items-center text-sm text-gray-500">
+                  <span>Reste à pointer</span>
+                  <span>-{depensesNonPointees.toFixed(2)} €</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -244,14 +289,26 @@ export default function SumeriaPage() {
                 ) : (
                   // Mode affichage
                   <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <div className="font-medium text-gray-900">{depense.nom}</div>
-                        <span className={`text-xs px-2 py-1 rounded-full border ${typeColors[depense.type]}`}>
-                          {typeLabels[depense.type]}
-                        </span>
+                    <div className="flex items-center gap-3 flex-1">
+                      <input
+                        type="checkbox"
+                        checked={depense.pointe || false}
+                        onChange={() => togglePointeDepense(index)}
+                        className="w-5 h-5 text-red-600 rounded focus:ring-2 focus:ring-red-500 cursor-pointer"
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <div className={`font-medium ${depense.pointe ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
+                            {depense.nom}
+                          </div>
+                          <span className={`text-xs px-2 py-1 rounded-full border ${typeColors[depense.type]}`}>
+                            {typeLabels[depense.type]}
+                          </span>
+                        </div>
+                        <div className={`text-sm ${depense.pointe ? 'text-gray-400' : 'text-gray-600'}`}>
+                          {depense.montant.toFixed(2)} €
+                        </div>
                       </div>
-                      <div className="text-sm text-gray-600">{depense.montant.toFixed(2)} €</div>
                     </div>
                     <div className="flex gap-2">
                       <button
