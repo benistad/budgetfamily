@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
+import { syncVirementRecurrent } from '@/lib/virementSync'
 
 const BRED_ID = '00000000-0000-0000-0000-000000000003'
 
@@ -80,6 +81,13 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
+
+    // Synchroniser les virements récurrents vers d'autres comptes
+    if (body.depenses && Array.isArray(body.depenses)) {
+      for (const depense of body.depenses) {
+        await syncVirementRecurrent(depense, 'bred')
+      }
+    }
 
     const { data: bred, error } = await supabase
       .from('bred')

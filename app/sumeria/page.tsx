@@ -11,6 +11,7 @@ interface Depense {
   montant: number
   type: TypeDepense
   date: string
+  compteDestination?: 'hellobank' | 'bred' | 'benoit' | 'marine' | 'aucun'
 }
 
 interface SumeriaData {
@@ -37,7 +38,8 @@ export default function SumeriaPage() {
   const [newDepense, setNewDepense] = useState({ 
     nom: '', 
     montant: '', 
-    type: 'prelevement' as TypeDepense 
+    type: 'prelevement' as TypeDepense,
+    compteDestination: 'aucun' as 'hellobank' | 'bred' | 'benoit' | 'marine' | 'aucun'
   })
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -89,11 +91,12 @@ export default function SumeriaPage() {
           nom: newDepense.nom,
           montant: parseFloat(newDepense.montant),
           type: newDepense.type,
-          date: new Date().toISOString()
+          date: new Date().toISOString(),
+          compteDestination: newDepense.type === 'virement_recurrent' ? newDepense.compteDestination : undefined
         }]
       }
       saveSumeria(updatedData)
-      setNewDepense({ nom: '', montant: '', type: 'prelevement' })
+      setNewDepense({ nom: '', montant: '', type: 'prelevement', compteDestination: 'aucun' })
     }
   }
 
@@ -206,6 +209,19 @@ export default function SumeriaPage() {
                       <option value="paiement_recurrent">Paiement récurrent CB</option>
                       <option value="virement_recurrent">Virement récurrent</option>
                     </select>
+                    {editDepenseData.type === 'virement_recurrent' && (
+                      <select
+                        value={editDepenseData.compteDestination || 'aucun'}
+                        onChange={(e) => setEditDepenseData({ ...editDepenseData, compteDestination: e.target.value as 'hellobank' | 'bred' | 'benoit' | 'marine' | 'aucun' })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent"
+                      >
+                        <option value="aucun">Aucun compte (externe)</option>
+                        <option value="hellobank">→ Hello Bank</option>
+                        <option value="bred">→ BRED</option>
+                        <option value="benoit">→ Benoit</option>
+                        <option value="marine">→ Marine</option>
+                      </select>
+                    )}
                     <div className="flex gap-2">
                       <button
                         onClick={saveEditDepense}
@@ -296,6 +312,21 @@ export default function SumeriaPage() {
                   <option value="virement_recurrent">Virement récurrent</option>
                 </select>
               </div>
+              
+              {/* Sélecteur de compte destination pour virements récurrents */}
+              {newDepense.type === 'virement_recurrent' && (
+                <select
+                  value={newDepense.compteDestination}
+                  onChange={(e) => setNewDepense({ ...newDepense, compteDestination: e.target.value as 'hellobank' | 'bred' | 'benoit' | 'marine' | 'aucun' })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent bg-white"
+                >
+                  <option value="aucun">Aucun compte (externe)</option>
+                  <option value="hellobank">→ Hello Bank</option>
+                  <option value="bred">→ BRED</option>
+                  <option value="benoit">→ Benoit</option>
+                  <option value="marine">→ Marine</option>
+                </select>
+              )}
               
               <button
                 onClick={addDepense}

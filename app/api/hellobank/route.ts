@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
+import { syncVirementRecurrent } from '@/lib/virementSync'
 
 const HELLOBANK_ID = '00000000-0000-0000-0000-000000000001'
 
@@ -24,9 +25,16 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
 
+    // Synchroniser les virements récurrents vers d'autres comptes
+    if (body.depenses && Array.isArray(body.depenses)) {
+      for (const depense of body.depenses) {
+        await syncVirementRecurrent(depense, 'hellobank')
+      }
+    }
+
     const { data: helloBank, error } = await supabase
       .from('hellobank')
-      .update({ 
+      .update({
         depenses: body.depenses,
         revenus: body.revenus
       })
