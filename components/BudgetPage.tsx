@@ -53,7 +53,7 @@ export default function BudgetPage({ personne }: BudgetPageProps) {
       setBudget({
         charges: data.charges || [],
         revenus: data.revenus || [],
-        virementFamille: data.virementFamille || 0
+        virementFamille: data.virement_famille || data.virementFamille || 0
       })
     } catch (error) {
       console.error('Error fetching budget:', error)
@@ -74,7 +74,7 @@ export default function BudgetPage({ personne }: BudgetPageProps) {
       setBudget({
         charges: data.charges || [],
         revenus: data.revenus || [],
-        virementFamille: data.virementFamille || 0
+        virementFamille: data.virement_famille || data.virementFamille || 0
       })
     } catch (error) {
       console.error('Error saving budget:', error)
