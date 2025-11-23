@@ -7,13 +7,13 @@ import Link from 'next/link'
 interface Charge {
   nom: string
   montant: number
-  date: Date
+  date: string
 }
 
 interface Revenu {
   nom: string
   montant: number
-  date: Date
+  date: string
 }
 
 interface BudgetData {
@@ -88,7 +88,7 @@ export default function BudgetPage({ personne }: BudgetPageProps) {
         charges: [...budget.charges, {
           nom: newCharge.nom,
           montant: parseFloat(newCharge.montant),
-          date: new Date()
+          date: new Date().toISOString()
         }]
       }
       saveBudget(updatedBudget)
@@ -111,7 +111,7 @@ export default function BudgetPage({ personne }: BudgetPageProps) {
         revenus: [...budget.revenus, {
           nom: newRevenu.nom,
           montant: parseFloat(newRevenu.montant),
-          date: new Date()
+          date: new Date().toISOString()
         }]
       }
       saveBudget(updatedBudget)

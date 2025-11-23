@@ -10,13 +10,13 @@ interface Depense {
   nom: string
   montant: number
   type: TypeDepense
-  date: Date
+  date: string
 }
 
 interface Revenu {
   nom: string
   montant: number
-  date: Date
+  date: string
 }
 
 interface BredData {
@@ -98,7 +98,7 @@ export default function BredPage() {
           nom: newDepense.nom,
           montant: parseFloat(newDepense.montant),
           type: newDepense.type,
-          date: new Date()
+          date: new Date().toISOString()
         }]
       }
       saveBred(updatedData)
@@ -121,7 +121,7 @@ export default function BredPage() {
         revenus: [...bred.revenus, {
           nom: newRevenu.nom,
           montant: parseFloat(newRevenu.montant),
-          date: new Date()
+          date: new Date().toISOString()
         }]
       }
       saveBred(updatedData)

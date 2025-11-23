@@ -10,7 +10,7 @@ interface Depense {
   nom: string
   montant: number
   type: TypeDepense
-  date: Date
+  date: string
 }
 
 interface SumeriaData {
@@ -87,7 +87,7 @@ export default function SumeriaPage() {
           nom: newDepense.nom,
           montant: parseFloat(newDepense.montant),
           type: newDepense.type,
-          date: new Date()
+          date: new Date().toISOString()
         }]
       }
       saveSumeria(updatedData)
