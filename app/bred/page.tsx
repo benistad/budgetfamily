@@ -206,7 +206,8 @@ export default function BredPage() {
                 </div>
                 <button
                   onClick={() => removeRevenu(index)}
-                  className="text-red-500 hover:text-red-700 p-2 ml-2"
+                  disabled={saving}
+                  className="text-red-500 hover:text-red-700 p-2 ml-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Trash2 className="w-5 h-5" />
                 </button>
@@ -275,7 +276,8 @@ export default function BredPage() {
                 </div>
                 <button
                   onClick={() => removeDepense(index)}
-                  className="text-red-500 hover:text-red-700 p-2 ml-2"
+                  disabled={saving}
+                  className="text-red-500 hover:text-red-700 p-2 ml-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Trash2 className="w-5 h-5" />
                 </button>
