@@ -20,11 +20,8 @@ export async function HEAD() {
 
 export async function GET() {
   try {
-    // Requête simple pour garder la connexion active
-    const { data, error } = await supabase
-      .from('transactions')
-      .select('id')
-      .limit(1)
+    // Requête simple pour garder la connexion active (ping sur auth)
+    const { error } = await supabase.auth.getSession()
 
     if (error) {
       console.error('[Keep-Alive] Erreur Supabase:', error.message)
